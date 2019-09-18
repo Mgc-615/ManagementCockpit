@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <title>ECharts</title>
+</head>
+
+<body>
+  <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+  <div id="main_orgStructure" style="width:100%;height:1100px;"></div>
+  <!-- ECharts单文件引入 -->
+  <script src="./echarts2/build/dist/echarts.js"></script>
+  <script src="../node_modules/axios/dist/axios.js"></script>
+  <script type="text/javascript">
+    // 路径配置
+    require.config({
+      paths: {
+        echarts: './echarts2/build/dist',
+      }
+    })
+    console.log('axios',axios)
+    // 使用
+    require([
+      'echarts',
+      'echarts/chart/tree' ,// 使用树状图就加载tree模块，按需加载
+    ], function(ec) {
+      // 基于准备好的dom，初始化echarts图表
+      var myChart = ec.init(document.getElementById('main_orgStructure'))
+      var commonStyle = {}
+      var option = {
+        title: {
+          // text: '组织结构图'
+        },
+        tooltip: {
+          show: false,
+          trigger: 'item',
+          formatter: '{b}: {c}'
+        },
+        // toolbox: {
+        //   show: true,
+        //   feature: {
+        //     mark: { show: true },
+        //     dataView: { show: true, readOnly: false },
+        //     restore: { show: true },
+        //     saveAsImage: { show: true }
+        //   }
+        // },
+        calculable: false,
+      }
+            //定义抠图方法
+            function getImgData(
+        imgSrc,
+        radius,
+        center = {
+          x: 0,
+          y: 0
+        }
+      ) {
+        return new Promise(resolve => {
+          const canvas = document.createElement('canvas')
+          const contex = canvas.getContext('2d')
+          const img = new Image()
+          img.crossOrigin = ''
+          const diameter = 2 * radius
+          img.onload = function() {
+            canvas.width = diameter
+            canvas.height = diameter
+            contex.clearRect(0, 0, diameter, diameter)
+            contex.save()
+            contex.beginPath()
+            contex.arc(radius, radius, radius, 0, 2 * Math.PI) //画出圆
+            contex.clip() //裁剪上面的圆形
+            contex.drawImage(
+              img,
+              center.x - radius,
+              center.y - radius,
+              diameter,
+              diameter,
+              0,
+              0,
+              diameter,
+              diameter
+            ) // 在刚刚裁剪的园上画图
+            contex.restore() // 还原状态
+            resolve(canvas.toDataURL('image/png', 1))
+          }
+          img.src = imgSrc
+        })
+      }
+      let p1 = getImgData(
+        './微信图片_20190318161648.jpg',
+        60,
+        {
+          x: 150,
+          y: 80
+        }
+      )
+      let p2 = getImgData(
+        'https://i.loli.net/2018/12/11/5c0f5d927472d.jpeg',
+        300,
+        {
+          x: 400,
+          y: 500
+        }
+      )
+      //当处理的图片数据量比较大时，可由后端来处理这个过程
+      Promise.all([p1, p2]).then(images => {
+        myChart.setOption({
+          series: [
+            {
+              type: 'tree',
+              orient: 'vertical', // 方向
+              rootLocation: {y: 80},
+              nodePadding:100,
+              layerPadding:80,
+              symbolSize: 50,
+              itemStyle: {
+                normal: {
+                  borderColor: '#407CFE',
+                  borderType: 'solid',
+                  borderWidth: 1,
+                  label: {
+                    position: 'bottom',
+                    textStyle: {
+                      color: '#36484F',
+                      fontSize: 12
+                    }
+                  },
+                  lineStyle: {
+                    color: '#E4E4E4',
+                    type:'broken',
+                    width: 1,
+                    curveness: 0 // 曲度
+                  }
+                }
+              },
+              data: [
+                {
+                  name: 'Project Manager',
+                  symbol: `image://${images[0]}`,
+                  // label: {
+                  //   position: 'top'
+                  // },
+                  children: [
+                    {
+                      name: 'Project Engineers',
+                      symbol: `image://${images[1]}`,
+                      children: [
+                        {
+                          name: 'HSSE Engineers',
+                          symbol: `image://${images[0]}`,
+                          children: [
+                            {
+                              name: 'Project Secretary',
+                              symbol: `image://${images[1]}`
+                            },
+                            {
+                              name: 'OA / QC Engineers',
+                              symbol: `image://${images[0]}`
+                            },
+                            {
+                              name: 'Lead Process Engineer',
+                              symbol: `image://${images[1]}`
+                            }
+                          ]
+                        },
+                        {
+                          name: 'Lead Mechanical',
+                          symbol: `image://${images[0]}`,
+                          children: [
+                            {
+                              name: 'Lead Electrical Engineer',
+                              symbol: `image://${images[1]}`
+                            },
+                            // {
+                            //   name: 'Lead I & C Engineer',
+                            //   symbol: `image://${images[0]}`
+                            // },
+                            // {
+                            //   name: 'Process Engineer',
+                            //   symbol: `image://${images[1]}`
+                            // },
+                            // {
+                            //   name: 'Mechanical Engineers',
+                            //   symbol: `image://${images[0]}`
+                            // }
+                          ]
+                        },
+                        {
+                          name: 'Electrical Engineers',
+                          symbol: `image://${images[1]}`,
+                          children: [
+                            {
+                              name: 'Lead Civil / Structure',
+                              symbol: `image://${images[0]}`
+                            },
+                            // {
+                            //   name: 'Pip / Pipeline Lead',
+                            //   symbol: `image://${images[1]}`
+                            // },
+                            // {
+                            //   name: 'Project Services Manager',
+                            //   symbol: `image://${images[0]}`
+                            // }
+                          ]
+                        },
+                        {
+                          name: 'Pip / Pipeline Designers',
+                          symbol: `image://${images[0]}`
+                        },
+                        // {
+                        //   name: 'Lead Civil / Structure Engineers',
+                        //   symbol: `image://${images[1]}`
+                        // },
+                        // {
+                        //   name: 'Stress Engineer',
+                        //   symbol: `image://${images[0]}`
+                        // }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        })
+      })
+      // 为echarts对象加载数据
+      myChart.setOption(option)
+    })
+  </script>
+</body>
