@@ -13,7 +13,7 @@
   "dependencies": {
     "@antv/data-set": "^0.10.2",
     "@antv/g2": "^3.5.8-beta.1",
-    "axios": "^0.18.1",
+    "axios": "^0.21.1",
     "crypto": "^1.0.1",
     "echarts": "^4.2.1",
     "echarts-stat": "^1.1.1",
